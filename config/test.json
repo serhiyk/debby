@@ -1,0 +1,36 @@
+{
+    "type": "warrior",
+    "variables": {},
+    "general_skills": {
+        "targetnext": "f9",
+        "attack": "f1",
+        "target": "f2",
+        "pickup": "f4"
+    },
+    "hp_skills": [
+        {
+            "name": "potion",
+            "func": "f8",
+            "hp": 90,
+            "timeout": 0,
+            "wait": 0,
+            "remote": true
+        }
+    ],
+    "pre_skills": [
+        {
+            "name": "potion",
+            "func": "f3",
+            "timeout": 0,
+            "wait": 0
+        }
+    ],
+    "post_skills": [
+        {
+            "name": "potion",
+            "func": "f5",
+            "timeout": 0,
+            "wait": 0
+        }
+    ]
+}

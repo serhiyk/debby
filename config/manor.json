@@ -1,0 +1,25 @@
+{
+    "type": "manor",
+    "variables": {
+        "user": "tuser",
+        "password": "tuser123"
+    },
+    "general_skills": {
+        "attack": "f1",
+        "target": "f2",
+        "server_time": "f7"
+    },
+    "manor": {
+        "Chilly Coda": {
+            "min_price": 1000,
+            "town": "Gludio",
+            "type": 2
+        },
+        "Red Coda": {
+            "type": 2
+        },
+        "Dark Coda": {
+            "type": 2
+        }
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "type": "client",
+    "variables": {},
+    "general_skills": {
+        "targetnext": "f9",
+        "attack": "f1",
+        "pickup": "f4"
+    }
+}

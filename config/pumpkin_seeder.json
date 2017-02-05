@@ -1,0 +1,21 @@
+{
+    "type": "halloween",
+    "variables": {},
+    "general_skills": {
+        "attack": "f1",
+        "pickup": "f4",
+        "use_sword": "f5",
+        "use_tool": "f6",
+        "targetnext": "f9",
+        "squash": "f11",
+        "pollen": "f12"
+    },
+    "pre_skills": [
+        {
+            "name": "hast",
+            "func": "f3",
+            "timeout": 120,
+            "wait": 2
+        }
+    ]
+}
