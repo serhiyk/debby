@@ -33,19 +33,18 @@ class Engine(KB, Window):
     def stop(self):
         self.exit_flag = True
 
-    def send_remote(self, data):
+    def send_remote(self, **kwargs):
         if self.sock is None:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.sock.sendto(data, ('255.255.255.255', UDP_PORT))
+        self.sock.sendto(json.dumps(kwargs), ('255.255.255.255', UDP_PORT))
 
     def recv_remote(self):
         if self.sock is None:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.sock.bind(('0.0.0.0', UDP_PORT))
         data, addr = self.sock.recvfrom(1024)
-        print 'Received:', data
-        return data
+        return json.loads(data)
 
     def init_variables(self):
         if 'variables' not in self.config:
@@ -61,28 +60,24 @@ class Engine(KB, Window):
 
     def init_hp_skills(self):
         if 'hp_skills' not in self.config:
-            self.use_hp_skills = None
+            self.use_hp_skills = lambda: None
             return
         self.hp_skills = []
         for skill in self.config['hp_skills']:
             _skill = {'name': skill['name']}
-            if 'remote' in skill and skill['remote']:
-                _skill['func'] = self.send_remote
-                _skill['args'] = [skill['name']]
-            else:
-                _skill['func'] = getattr(self, skill['func'])
-                _skill['args'] = []
+            _skill['func'] = getattr(self, skill['func'])
             _skill['hp'] = skill['hp']
             _skill['timeout'] = skill['timeout']
             _skill['wait'] = skill['wait']
-            _skill['last_use'] = time.time()
+            _skill['last_use'] = 0
             self.hp_skills.append(_skill)
 
     def use_hp_skills(self, hp):
+        self.send_remote(hp=hp)
         for skill in self.hp_skills:
             if hp < skill['hp']:
                 if time.time() > (skill['timeout'] + skill['last_use']):
-                    skill['func'](*skill['args'])
+                    skill['func']()
                     time.sleep(skill['wait'])
                     skill['last_use'] = time.time()
 
@@ -94,19 +89,19 @@ class Engine(KB, Window):
         for skill in self.config['pre_skills']:
             _skill = {'name': skill['name']}
             _skill['func'] = getattr(self, skill['func'])
-            try:
-                if skill['first_use'] is True:
-                    _skill['func']()
-                    time.sleep(skill['wait'])
-            except KeyError:
-                pass
+            if 'first_use' in skill and skill['first_use']:
+                _skill['last_use'] = 0
+            else:
+                _skill['last_use'] = time.time()
+            _skill['skip_target'] = skill.get('skip_target', '')
             _skill['timeout'] = skill['timeout']
             _skill['wait'] = skill['wait']
-            _skill['last_use'] = time.time()
             self.pre_skills.append(_skill)
 
-    def use_pre_skills(self):
+    def use_pre_skills(self, target_name=''):
         for skill in self.pre_skills:
+            if len(skill['skip_target']) > 0 and target_name.startswith(skill['skip_target']):
+                continue
             if time.time() > (skill['timeout'] + skill['last_use']):
                 skill['func']()
                 time.sleep(skill['wait'])
@@ -132,50 +127,18 @@ class Engine(KB, Window):
                 time.sleep(skill['wait'])
                 skill['last_use'] = time.time()
 
+    def client(self):
+        while not self.exit_flag:
+            data = self.recv_remote()
+            for key in data:
+                setattr(self, key, data[key])
+            # func = getattr(self, data)
+            # func()
+
 
 class Engine1(Engine):
     def __init__(self, config):
         super(Engine1, self).__init__(config)
-
-    def warrior(self):
-        window = Window(hp_callback=self.use_hp_skills)
-        target_last = False
-        state = State.check_target
-        while not self.exit_flag:
-            if state == State.check_target:
-                self.targetnext()
-                time.sleep(0.3)
-                if window.get_target_hp() > 0:
-                    print 'Found next mob'
-                    state = State.kill_target
-                else:
-                    state = State.wait_target
-
-            elif state == State.kill_target:
-                target_last = True
-                if hasattr(self, 'skip_target'):
-                    if window.check_target_name(self.skip_target):
-                        self.targetnext()
-                        time.sleep(0.3)
-                self.use_pre_skills()
-                while window.get_target_hp() > 0:
-                    self.attack()
-                    time.sleep(2)
-                self.use_post_skills()
-                state = State.check_target
-
-            elif state == State.wait_target:
-                if target_last:
-                    target_last = False
-                    for i in xrange(8):
-                        self.pickup()
-                        time.sleep(0.3)
-                    self.target()
-                    time.sleep(0.5)
-                    self.attack()
-
-                time.sleep(1)
-                state = State.check_target
 
     def suicider(self):
         window = Window()
@@ -247,12 +210,6 @@ class Engine1(Engine):
                 time.sleep(1)
                 self.use_post_skills()
                 state = State.seed_squash
-
-    def client(self):
-        while not self.exit_flag:
-            data = self.recv_remote()
-            func = getattr(self, data)
-            func()
 
 
 if __name__ == '__main__':

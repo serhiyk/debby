@@ -147,125 +147,121 @@ class OCR(object):
 
 
 class Window(OCR):
-    def __init__(self, hp_callback=None):
+    def __init__(self):
         super(Window, self).__init__()
-        self.hp_callback = hp_callback
-        self.self_hp_color = None
-        self.target_hp_color = None
-        self.target_hp_x = None
-        self.start_x = None
 
-    def get_button_position(self, template, bbox=None):
-        try:
-            x, y, _, _ = find_image(template, bbox)
-            print("{} found: ({}, {})".format(template.split('/')[-1], x, y))
-        except TypeError:
+    def get_button_location(self, template, bbox=None):
+        res = find_image(template, bbox)
+        if res is None:
             print("{} is not found".format(template.split('/')[-1]))
-            return False
+            return
+        x, y, _, _ = res
         return x, y
 
-    def get_window_position(self):
-        if self.start_x is not None:
-            return self.start_x, self.start_y
-        try:
-            self.start_x, self.start_y, _, _ = find_image("../templates/border.bmp")
-        except TypeError:
-            return False
-        self.self_hp_x = self.start_x + 16
-        self.self_hp_y = self.start_y + 41
-        return self.start_x, self.start_y
+    def get_window_location(self):
+        res = find_image("../templates/border.bmp")
+        if res is None:
+            print("window location is not found")
+            return
+        x, y, _, _ = res
+        self.get_window_location = lambda: (x, y)
+        return self.get_window_location()
 
-    def get_target_position(self):
-        try:
-            x, y, _, _ = find_image("../templates/border.bmp", (self.start_x + 200, self.start_y, self.start_x + 1000, self.start_y + 20))
-        except TypeError:
-            return False
-        self.target_hp_x = x + 16
-        self.target_hp_y = y + 28
-        self.target_name_x = x + 27
-        self.target_name_y = y + 10
-        return self.target_name_x, self.target_name_y
+    def get_self_hp_location(self):
+        res = self.get_window_location()
+        if res is None:
+            return
+        x, y = res
+        x += 16
+        y += 41
+        self.get_self_hp_location = lambda: (x, y)
+        return self.get_self_hp_location()
 
-    def get_login_position(self):
-        try:
-            x, y, self.login_button_x, self.login_button_y = find_image("../templates/login_button.bmp")
-        except TypeError:
+    def get_target_window_location(self):
+        res = self.get_window_location()
+        if res is None:
+            return
+        x, y = res
+        res = find_image("../templates/border.bmp", (x + 200, y, x + 1000, y + 20))
+        if res is None:
+            print("target window location is not found")
+            return
+        x, y, _, _ = res
+        self.get_target_window_location = lambda: (x, y)
+        return self.get_target_window_location()
+
+    def get_target_name_location(self):
+        res = self.get_target_window_location()
+        if res is None:
+            return
+        x, y = res
+        x += 20
+        y += 8
+        self.get_target_name_location = lambda: (x, y)
+        return self.get_target_name_location()
+
+    def get_target_hp_location(self):
+        res = self.get_target_window_location()
+        if res is None:
+            return
+        x, y = res
+        x += 16
+        y += 28
+        self.get_target_hp_location = lambda: (x, y)
+        return self.get_target_hp_location()
+
+    def get_login_location(self):
+        res = find_image("../templates/login_button.bmp")
+        if res is None:
             print("login is not found")
-            return False
-        self.login_x = x + 100
-        self.login_y = y - 44
-        self.password_x = x + 100
-        self.password_y = y - 22
-        print("login: ({}, {})".format(self.login_x, self.login_y))
-        print("password: ({}, {})".format(self.password_x, self.password_y))
-        print("login button: ({}, {})".format(self.login_button_x, self.login_button_y))
-        return self.login_x, self.login_y, self.password_x, self.password_y, self.login_button_x, self.login_button_y
+            return
+        x, y, login_button_x, login_button_y = res
+        login_x = x + 100
+        login_y = y - 44
+        password_x = x + 100
+        password_y = y - 22
+        return login_x, login_y, password_x, password_y, login_button_x, login_button_y
 
-    def get_rules_position(self):
-        try:
-            _, _, self.rules_x, self.rules_y = find_image("../templates/rules_button.bmp", (400, 400, 1280, 800))
-        except TypeError:
-            print("rules is not found")
-            return False
-        print("rules: ({}, {})".format(self.rules_x, self.rules_y))
-        return self.rules_x, self.rules_y
-
-    def get_server_position(self):
-        try:
-            _, _, self.server_x, self.server_y = find_image("../templates/server_button.bmp", (400, 300, 1280, 800))
-        except TypeError:
-            print("server is not found")
-            return False
-        print("server: ({}, {})".format(self.server_x, self.server_y))
-        return self.server_x, self.server_y
-
-    def get_pers_position(self):
-        try:
-            _, _, self.pers_x, self.pers_y = find_image("../templates/pers_button.bmp", (400, 500, 1280, 1000))
-        except TypeError:
-            print("pers is not found")
-            return False
-        print("pers: ({}, {})".format(self.pers_x, self.pers_y))
-        return self.pers_x, self.pers_y
-
-    def get_manor_scroll_down_position(self):
-        try:
-            x, y, _, _ = find_image("../templates/window_token.bmp")
-            print("manor dialog: ({}, {})".format(x, y))
-            _, _, x, y = find_image("../templates/arrow_down.bmp", (x + 250, y + 350, x + 310, y + 410))
-        except TypeError:
+    def get_manor_scroll_down_location(self):
+        res = find_image("../templates/window_token.bmp")
+        if res is None:
+            print("manor window is not found")
+            return
+        x, y, _, _ = res
+        res = find_image("../templates/arrow_down.bmp", (x + 250, y + 350, x + 310, y + 410))
+        if res is None:
             print("manor dialog is not found")
-            return False
-        print("manor dialog scroll down: ({}, {})".format(x, y))
+            return
+        _, _, x, y = res
         return x, y
 
     def get_manor_phrase(self):
-        try:
-            _, _, x, y = self.find_line("Tally up indigenous product", [p_violet])
-            print("manor phrase: ({}, {})".format(x, y))
-        except TypeError:
+        res = self.find_line("Tally up indigenous product", [p_violet])
+        if res is None:
             print("manor phrase is not found")
-            return False
+            return
+        _, _, x, y = res
         return x, y
 
     def get_manor_seed_list(self):
-        try:
-            x, y, _, _ = find_image("../templates/seed_name.bmp")
-            print("seed name: ({}, {})".format(x, y))
-        except TypeError:
+        res = find_image("../templates/seed_name.bmp")
+        if res is None:
             print("seed name is not found")
-            return False
+            return
+        x, y, _, _ = res
         return self.get_multiline([p_white], (x, y, x + 140, y + 200))
 
     def get_manor_town_list(self):
-        try:
-            x, y, _, _ = find_image("../templates/territory_name.bmp")
-            print("territory name: ({}, {})".format(x, y))
-            _, _, town_x, town_y = find_image("../templates/town_choice.bmp", (x, y, x + 300, y + 220))
-            print("town choice: ({}, {})".format(town_x, town_y))
-        except TypeError:
+        res = find_image("../templates/territory_name.bmp")
+        if res is None:
             print("territory name is not found")
-            return False
+            return
+        x, y, _, _ = res
+        res = find_image("../templates/town_choice.bmp", (x, y, x + 300, y + 220))
+        if res is None:
+            print("town choice is not found")
+            return
+        _, _, town_x, town_y = res
         result = {}
         for el in self.get_multiline([p_white], (x, y, x + 300, y + 110)):
             try:
@@ -276,39 +272,46 @@ class Window(OCR):
         return result, town_x, town_y
 
     def get_manor_town(self, town):
-        try:
-            x, y, _, _ = find_image("../templates/town_choice.bmp")
-            x -= 12
-            print("town choice: ({}, {})".format(x, y))
-            _, _, x, y = self.find_line(town, [p_white], (x, y, x + 100, y + 150))
-            print("town {}: ({}, {})".format(town, x, y))
-        except TypeError:
+        res = find_image("../templates/town_choice.bmp")
+        if res is None:
+            print("town choice is not found")
+            return
+        x, y, _, _ = res
+        x -= 12
+        res = self.find_line(town, [p_white], (x, y, x + 100, y + 150))
+        if res is None:
             print("town is not found")
-            return False
+            return
+        _, _, x, y = res
         return x, y
 
     def get_agree_button(self, bbox=None):
-        return self.get_button_position("../templates/agree_button.bmp", bbox)
+        return self.get_button_location("../templates/agree_button.bmp", bbox)
 
     def get_start_button(self, bbox=None):
-        return self.get_button_position("../templates/start_button.bmp", bbox)
+        return self.get_button_location("../templates/start_button.bmp", bbox)
 
     def get_manor_set_button(self, bbox=None):
-        return self.get_button_position("../templates/manor_set_button.bmp", bbox)
+        return self.get_button_location("../templates/manor_set_button.bmp", bbox)
 
     def get_sell_button(self, bbox=None):
-        return self.get_button_position("../templates/sell_button.bmp", bbox)
+        return self.get_button_location("../templates/sell_button.bmp", bbox)
 
     def get_accept_button(self, bbox=None):
-        return self.get_button_position("../templates/accept_button.bmp", bbox)
+        return self.get_button_location("../templates/accept_button.bmp", bbox)
+
+    def get_death_button(self, bbox=None):
+        return self.get_button_location("../templates/death_button.bmp", bbox)
+
+    def get_resurrection_button(self, bbox=None):
+        return self.get_button_location("../templates/resurrection_button.bmp", bbox)
 
     def get_system_msg(self, colour_list=[color_chat_brown]):
         if not hasattr(self, "system_msg_coordinates"):
             try:
-                x, y = self.get_window_position()
+                x, y = self.get_window_location()
                 x, y, _, _ = find_image("../templates/arrow_down.bmp", (x, y, x + 25, y + 900))
                 self.system_msg_coordinates = (x + 15, y - 8, x + 320, y + 8)
-                print self.system_msg_coordinates
             except TypeError:
                 print("system message is not found")
                 return False
@@ -319,10 +322,13 @@ class Window(OCR):
             return ''
 
     def get_self_hp(self):
-        screen = ImageGrab.grab((self.self_hp_x, self.self_hp_y, self.self_hp_x + 150, self.self_hp_y + 1))
+        res = self.get_self_hp_location()
+        if res is None:
+            return 0
+        x, y = res
+        screen = ImageGrab.grab((x, y, x + 150, y + 1))
         screen_data = list(screen.getdata())
-        if self.self_hp_color is None:
-            self.self_hp_color = screen_data[0]
+        self.self_hp_color = getattr(self, 'self_hp_color', screen_data[0])
         hp = 0
         for pixel in screen_data:
             if pixel == self.self_hp_color:
@@ -332,95 +338,36 @@ class Window(OCR):
         return hp * 100 / 150
 
     def get_target_hp(self):
-        if self.target_hp_x is None:
-            if self.get_target_position() is False:
-                return 0
-        screen = ImageGrab.grab((self.target_hp_x, self.target_hp_y, self.target_hp_x + 150, self.target_hp_y + 1))
+        res = self.get_target_hp_location()
+        if res is None:
+            return 0
+        x, y = res
+        screen = ImageGrab.grab((x, y, x + 150, y + 1))
         screen_data = list(screen.getdata())
-        if self.target_hp_color is None:
-            target_hp_color = screen_data[0]
-        else:
-            target_hp_color = self.target_hp_color
+        hp_color = getattr(self, 'target_hp_color', screen_data[0])
         hp = 0
         for pixel in screen_data:
-            if pixel == target_hp_color:
+            if pixel == hp_color:
                 hp += 1
             else:
                 break
-        if self.target_hp_color is None:
+        if not hasattr(self, "target_hp_color"):
             if hp > 10:
-                self.target_hp_color = target_hp_color
+                self.target_hp_color = hp_color
             else:
                 return 0
         return hp
 
-    def check_target_name(self, name):
-        screen = ImageGrab.grab((self.target_name_x, self.target_name_y, self.target_name_x + 100, self.target_name_y + 10))
-        target_name_data = list(screen.getdata())
-        for i in xrange(len(target_name_data)):
-            if target_name_data[i] in target_name_colours:
-                target_name_data[i] = 1
-            else:
-                target_name_data[i] = 0
-        width, height = screen.size
-        data = [target_name_data[i * width:(i + 1) * width] for i in xrange(height)]
-
-        def check_equal(lst):
-            for el in lst:
-                if el != 0:
-                    return True
-            return False
-        data = [x for x in data if check_equal(x)]
-        data = zip(*data)
-        i = 0
-        n = 0
-
-        def sublistExists(list1, list2):
-            return ''.join(map(str, list2)) in ''.join(map(str, list1))
-        while True:
-            if i >= len(data):
-                break
-            if check_equal(data[i]):
-                matrix = m[name[n]]
-                for t in range(len(matrix)):
-                    if not sublistExists(data[i + t], matrix[t]):
-                        return False
-                i += len(matrix)
-                n += 1
-                if n >= len(name):
-                    return True
-            i += 1
-        return False
-
-    def check_death(self):
-        try:
-            self.death_x, self.death_y, _, _ = find_image("../templates/death_button.bmp", (self.start_x, self.start_y, self.start_x + 1000, self.start_y + 600))
-        except TypeError:
-            return False
-        self.check_death = self._check_death
-        return True
-
-    def _check_death(self):
-        try:
-            _, _, _, _ = find_image("../templates/death_button.bmp", (self.death_x, self.death_y, self.death_x + 12, self.death_y + 8))
-        except TypeError:
-            return False
-        return True
-
-    def check_resurrection(self):
-        try:
-            self.resurrection_x, self.resurrection_y, _, _ = find_image("../templates/resurrection_button.bmp", (self.start_x, self.start_y, self.start_x + 1000, self.start_y + 600))
-        except TypeError:
-            return False
-        self.check_resurrection = self._check_resurrection
-        return True
-
-    def _check_resurrection(self):
-        try:
-            _, _, _, _ = find_image("../templates/resurrection_button.bmp", (self.resurrection_x, self.resurrection_y, self.resurrection_x + 12, self.resurrection_y + 10))
-        except TypeError:
-            return False
-        return True
+    def get_target_name(self, colour_list=target_name_colours):
+        res = self.get_target_name_location()
+        if res is None:
+            return ''
+        x, y = res
+        res = self.get_line(colour_list, (x, y, x + 150, y + 14))
+        if res:
+            return res[0]
+        else:
+            return ''
 
 
 def find_image(image, bbox=None):

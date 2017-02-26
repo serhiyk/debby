@@ -24,8 +24,8 @@ class Manor(Engine):
                 state = "login"
 
             elif state == "login":
-                res = self.get_login_position()
-                if res is not False:
+                res = self.get_login_location()
+                if res:
                     login_x, login_y, password_x, password_y, login_button_x, login_button_y = res
                     self.move_to((login_x, login_y))
                     self.click()
@@ -44,28 +44,28 @@ class Manor(Engine):
 
             elif state == "rules_window":
                 coordinates = self.get_agree_button()
-                if coordinates is not False:
+                if coordinates:
                     self.move_to(coordinates)
                     self.click()
                     state = "server_window"
 
             elif state == "server_window":
                 coordinates = self.get_accept_button()
-                if coordinates is not False:
+                if coordinates:
                     self.move_to(coordinates)
                     self.click()
                     state = "pers_window"
 
             elif state == "pers_window":
                 coordinates = self.get_start_button()
-                if coordinates is not False:
+                if coordinates:
                     self.move_to(coordinates)
                     self.click()
                     state = "game_window"
 
             elif state == "game_window":
-                res = self.get_window_position()
-                if res is not False:
+                res = self.get_window_location()
+                if res:
                     time.sleep(5)
                     state = "get_time"
 
@@ -108,14 +108,14 @@ class Manor(Engine):
             elif state == "select_target":
                 self.target()
                 time.sleep(0.5)
-                res = self.get_target_position()
-                if res is not False:
+                res = self.get_target_window_location()
+                if res:
                     self.attack()
                     state = "manor_dialog_window"
 
             elif state == "manor_dialog_window":
-                coordinates = self.get_manor_scroll_down_position()
-                if coordinates is not False:
+                coordinates = self.get_manor_scroll_down_location()
+                if coordinates:
                     self.move_to(coordinates)
                     self.click()
                     state = "find_manor_phrase"
@@ -124,14 +124,14 @@ class Manor(Engine):
                 self.click()
                 time.sleep(0.5)
                 coordinates = self.get_manor_phrase()
-                if coordinates is not False:
+                if coordinates:
                     self.move_to(coordinates)
                     self.click()
                     state = "manor_seed_window"
 
             elif state == "manor_seed_window":
                 manor_list = self.get_manor_seed_list()
-                if manor_list is not False:
+                if manor_list:
                     if len(manor_list) == 0:
                         print("There is no any manor")
                     state = "select_manor"
@@ -148,11 +148,11 @@ class Manor(Engine):
                     time.sleep(0.1)
                     self.move_to(manor_list[0]["center"])
                     state = "select_manor_town"
-                    self.move_to((self.start_x, self.start_y))
+                    self.move_to((0, 0))
 
             elif state == "select_manor_town":
                 res = self.get_manor_town_list()
-                if res is not False:
+                if res:
                     town_list, x, y = res
                     town_list = {k: v for k, v in town_list.iteritems() if v["type"] == manor_config[manor_list[0]["line"]]["type"]}
                     if len(town_list) == 0:
@@ -179,12 +179,12 @@ class Manor(Engine):
                         self.move_to((x, y))
                         self.click()
                         coordinates = self.get_manor_town(town)
-                        if coordinates is not False:
+                        if coordinates:
                             self.move_to(coordinates)
                             self.click()
                             time.sleep(1)
                             coordinates = self.get_manor_set_button()
-                            if coordinates is not False:
+                            if coordinates:
                                 self.move_to(coordinates)
                                 self.click()
                                 del manor_list[0]
@@ -194,14 +194,14 @@ class Manor(Engine):
 
             elif state == "accept":
                 coordinates = self.get_accept_button()
-                if coordinates is not False:
+                if coordinates:
                     self.move_to(coordinates)
                     self.click()
                     state = "select_manor"
 
             elif state == "finish":
                 coordinates = self.get_sell_button()
-                if coordinates is False:
+                if coordinates is None:
                     print("Sell button is not found")
                     break
                 self.move_to(coordinates)
