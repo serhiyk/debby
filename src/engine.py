@@ -1,6 +1,7 @@
 import json
 import time
 import socket
+import thread
 import winsound
 from kb import KB
 from screen import Window
@@ -17,10 +18,17 @@ class State(object):
     pollen = 5
 
 
+def play_sound_thread(duration, frequency):
+    for i in range(duration):
+        winsound.Beep(frequency, 500)
+        time.sleep(0.5)
+
+
 class Engine(KB, Window):
     def __init__(self, config):
         super(Engine, self).__init__()
-        self.sock = None
+        self.recv_sock = None
+        self.send_sock = None
         with open(config) as f:
             self.config = json.load(f)
         self.exit_flag = False
@@ -33,17 +41,20 @@ class Engine(KB, Window):
     def stop(self):
         self.exit_flag = True
 
+    def play_sound(self, duration, frequency=1000):
+        thread.start_new_thread(play_sound_thread, (duration, frequency))
+
     def send_remote(self, **kwargs):
-        if self.sock is None:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.sock.sendto(json.dumps(kwargs), ('255.255.255.255', UDP_PORT))
+        if self.send_sock is None:
+            self.send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.send_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.send_sock.sendto(json.dumps(kwargs), ('255.255.255.255', UDP_PORT))
 
     def recv_remote(self):
-        if self.sock is None:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.sock.bind(('0.0.0.0', UDP_PORT))
-        data, addr = self.sock.recvfrom(1024)
+        if self.recv_sock is None:
+            self.recv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.recv_sock.bind(('0.0.0.0', UDP_PORT))
+        data, addr = self.recv_sock.recvfrom(1024)
         return json.loads(data)
 
     def init_variables(self):
@@ -74,12 +85,14 @@ class Engine(KB, Window):
 
     def use_hp_skills(self, hp):
         self.send_remote(hp=hp)
+        if hp == 0:
+            return
         for skill in self.hp_skills:
             if hp < skill['hp']:
                 if time.time() > (skill['timeout'] + skill['last_use']):
                     skill['func']()
-                    time.sleep(skill['wait'])
                     skill['last_use'] = time.time()
+                    time.sleep(skill['wait'])
 
     def init_pre_skills(self):
         if 'pre_skills' not in self.config:
@@ -104,8 +117,8 @@ class Engine(KB, Window):
                 continue
             if time.time() > (skill['timeout'] + skill['last_use']):
                 skill['func']()
-                time.sleep(skill['wait'])
                 skill['last_use'] = time.time()
+                time.sleep(skill['wait'])
 
     def init_post_skills(self):
         if 'post_skills' not in self.config:
@@ -117,15 +130,15 @@ class Engine(KB, Window):
             _skill['func'] = getattr(self, skill['func'])
             _skill['timeout'] = skill['timeout']
             _skill['wait'] = skill['wait']
-            _skill['last_use'] = time.time()
+            _skill['last_use'] = 0
             self.post_skills.append(_skill)
 
     def use_post_skills(self):
         for skill in self.post_skills:
             if time.time() > (skill['timeout'] + skill['last_use']):
                 skill['func']()
-                time.sleep(skill['wait'])
                 skill['last_use'] = time.time()
+                time.sleep(skill['wait'])
 
     def client(self):
         while not self.exit_flag:
