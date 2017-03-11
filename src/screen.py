@@ -155,7 +155,7 @@ class Window(OCR):
         if res is None:
             print("{} is not found".format(template.split('/')[-1]))
             return
-        x, y, _, _ = res
+        _, _, x, y = res
         return x, y
 
     def get_window_location(self):

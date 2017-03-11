@@ -10,6 +10,7 @@ class Support(Engine):
         thread.start_new_thread(self.client, ())
 
     def run(self):
+        time.sleep(5)
         while not self.exit_flag:
             self.use_hp_skills(self.hp)
             self.use_post_skills()
@@ -23,7 +24,6 @@ class Support(Engine):
 
 
 if __name__ == '__main__':
-    time.sleep(5)
     try:
         e = Support('../config/test.json')
         e.run()

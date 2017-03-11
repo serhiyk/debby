@@ -62,6 +62,7 @@ class KB(object):
         _x = coordinates[0] - self.current_x
         _y = coordinates[1] - self.current_y
         self.move(_x, _y)
+        time.sleep(0.5)
         self.current_x = coordinates[0]
         self.current_y = coordinates[1]
 

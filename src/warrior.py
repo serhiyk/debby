@@ -7,6 +7,7 @@ class Warrior(Engine):
         super(Warrior, self).__init__(config)
 
     def run(self):
+        time.sleep(5)
         target_counter = 0
         state = "check_target"
         while not self.exit_flag:
@@ -59,7 +60,6 @@ class Warrior(Engine):
 
 
 if __name__ == '__main__':
-    time.sleep(5)
     try:
         e = Warrior('../config/test.json')
         e.run()

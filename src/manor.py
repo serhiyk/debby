@@ -135,6 +135,9 @@ class Manor(Engine):
                     if len(manor_list) == 0:
                         print("There is no any manor")
                     state = "select_manor"
+                else:
+                    self.click()
+                    time.sleep(0.5)
 
             elif state == "select_manor":
                 if len(manor_list) == 0:
@@ -145,58 +148,60 @@ class Manor(Engine):
                 else:
                     self.move_to(manor_list[0]["center"])
                     self.doubleclick()
-                    time.sleep(0.1)
-                    self.move_to(manor_list[0]["center"])
+                    time.sleep(0.5)
                     state = "select_manor_town"
                     self.move_to((0, 0))
+                    time.sleep(1)
 
             elif state == "select_manor_town":
                 res = self.get_manor_town_list()
-                if res:
-                    town_list, x, y = res
-                    town_list = {k: v for k, v in town_list.iteritems() if v["type"] == manor_config[manor_list[0]["line"]]["type"]}
-                    if len(town_list) == 0:
-                        print("There is no any town")
-                        del manor_list[0]
-                        state = "accept"
-                        continue
+                if res is None:
+                    state = "select_manor"
+                    continue
+                town_list, x, y = res
+                town_list = {k: v for k, v in town_list.iteritems() if v["type"] == manor_config[manor_list[0]["line"]]["type"]}
+                if len(town_list) == 0:
+                    print("There is no any town")
+                    del manor_list[0]
+                    state = "accept"
+                    continue
+                else:
+                    if "town" in manor_config[manor_list[0]["line"]]:
+                        town = manor_config[manor_list[0]["line"]]["town"]
+                        if town not in town_list:
+                            print("Town {} is not available".format(town))
+                            del manor_list[0]
+                            state = "accept"
+                            continue
                     else:
-                        if "town" in manor_config[manor_list[0]["line"]]:
-                            town = manor_config[manor_list[0]["line"]]["town"]
-                            if town not in town_list:
-                                print("Town {} is not available".format(town))
-                                del manor_list[0]
-                                state = "accept"
-                                continue
-                        else:
-                            town = max(town_list, key=lambda i: town_list[i]["price"])
-                        if "min_price" in manor_config[manor_list[0]["line"]]:
-                            if town_list[town]["price"] < manor_config[manor_list[0]["line"]]["min_price"]:
-                                print("Price {} is too low".format(town_list[town]["price"]))
-                                del manor_list[0]
-                                state = "accept"
-                                continue
-                        self.move_to((x, y))
+                        town = max(town_list, key=lambda i: town_list[i]["price"])
+                    if "min_price" in manor_config[manor_list[0]["line"]]:
+                        if town_list[town]["price"] < manor_config[manor_list[0]["line"]]["min_price"]:
+                            print("Price {} is too low".format(town_list[town]["price"]))
+                            del manor_list[0]
+                            state = "accept"
+                            continue
+                    self.move_to((x, y))
+                    self.click()
+                    coordinates = self.get_manor_town(town)
+                    if coordinates:
+                        self.move_to(coordinates)
                         self.click()
-                        coordinates = self.get_manor_town(town)
+                        time.sleep(1)
+                        coordinates = self.get_manor_set_button()
                         if coordinates:
                             self.move_to(coordinates)
                             self.click()
-                            time.sleep(1)
-                            coordinates = self.get_manor_set_button()
-                            if coordinates:
-                                self.move_to(coordinates)
-                                self.click()
-                                del manor_list[0]
-                                state = "accept"
-                                continue
-                    state = "accept"
+                            del manor_list[0]
+                            state = "accept"
+                            continue
+                state = "accept"
 
             elif state == "accept":
                 coordinates = self.get_accept_button()
                 if coordinates:
                     self.move_to(coordinates)
-                    self.click()
+                    self.doubleclick()
                     state = "select_manor"
 
             elif state == "finish":
@@ -208,7 +213,7 @@ class Manor(Engine):
                 print('Wait to {}'.format(run_time))
                 while datetime.now() < run_time:
                     pass
-                self.click()
+                self.doubleclick()
                 state = "done"
 
             elif state == "done":
