@@ -328,13 +328,15 @@ class Window(OCR):
         x, y = res
         screen = ImageGrab.grab((x, y, x + 150, y + 1))
         screen_data = list(screen.getdata())
-        self.self_hp_color = getattr(self, 'self_hp_color', screen_data[0])
         hp = 0
         for pixel in screen_data:
-            if pixel == self.self_hp_color:
+            if pixel == screen_data[0]:
                 hp += 1
             else:
                 break
+        self.self_hp_color = getattr(self, 'self_hp_color', screen_data[0])
+        if hp == 150 and self.self_hp_color != screen_data[0]:
+            return 0
         return hp * 100 / 150
 
     def get_target_hp(self):

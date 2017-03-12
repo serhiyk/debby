@@ -8,7 +8,8 @@ class Warrior(Engine):
 
     def run(self):
         time.sleep(5)
-        target_counter = 0
+        self.target_counter = 0
+        self.killed_counter = 0
         state = "check_target"
         while not self.exit_flag:
             print("State: {}".format(state))
@@ -16,8 +17,8 @@ class Warrior(Engine):
                 self.targetnext()
                 time.sleep(0.5)
                 if self.get_target_hp() > 0:
-                    target_counter += 1
-                    print("target found: {}".format(target_counter))
+                    self.target_counter += 1
+                    print("target found: {}".format(self.target_counter))
                     state = "kill_target"
                 else:
                     state = "wait_target"
@@ -39,17 +40,18 @@ class Warrior(Engine):
                     time.sleep(1)
                 time.sleep(1)
                 self.use_post_skills()
+                self.killed_counter += 1
                 state = "check_target"
 
             elif state == "wait_target":
-                if target_counter > 0:
-                    for i in xrange(target_counter * 4):
+                if self.target_counter > 0:
+                    for i in xrange(self.target_counter * 4):
                         self.pickup()
                         time.sleep(0.3)
                     self.target()
                     time.sleep(0.5)
                     self.attack()
-                    target_counter = 0
+                    self.target_counter = 0
                 self.check_self_hp()
                 time.sleep(1)
                 state = "check_target"
