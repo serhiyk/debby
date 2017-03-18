@@ -35,6 +35,7 @@ class Engine(KB, Window):
         self.init_variables()
         self.init_general_skills()
         self.init_hp_skills()
+        self.init_battle_skills()
         self.init_pre_skills()
         self.init_post_skills()
 
@@ -93,6 +94,29 @@ class Engine(KB, Window):
                     skill['func']()
                     skill['last_use'] = time.time()
                     time.sleep(skill['wait'])
+
+    def init_battle_skills(self):
+        if 'battle_skills' not in self.config:
+            self.use_battle_skills = lambda: None
+            return
+        self.battle_skills = []
+        for skill in self.config['battle_skills']:
+            _skill = {'name': skill['name']}
+            _skill['func'] = getattr(self, skill['func'])
+            if 'first_use' in skill and skill['first_use']:
+                _skill['last_use'] = 0
+            else:
+                _skill['last_use'] = time.time()
+            _skill['timeout'] = skill['timeout']
+            _skill['wait'] = skill['wait']
+            self.battle_skills.append(_skill)
+
+    def use_battle_skills(self):
+        for skill in self.battle_skills:
+            if time.time() > (skill['timeout'] + skill['last_use']):
+                skill['func']()
+                skill['last_use'] = time.time()
+                time.sleep(skill['wait'])
 
     def init_pre_skills(self):
         if 'pre_skills' not in self.config:

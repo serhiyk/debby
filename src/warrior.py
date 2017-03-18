@@ -30,13 +30,15 @@ class Warrior(Engine):
                         self.targetnext()
                         time.sleep(0.5)
                         target_name = self.get_target_name()
+                self.use_battle_skills()
                 self.use_pre_skills(target_name)
                 i = 0
                 while self.get_target_hp() > 0:
+                    self.use_battle_skills()
+                    self.check_self_hp()
                     if i % 2 == 0:
                         self.attack()
                     i += 1
-                    self.check_self_hp()
                     time.sleep(1)
                 time.sleep(1)
                 self.use_post_skills()
