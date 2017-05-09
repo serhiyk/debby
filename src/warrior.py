@@ -1,4 +1,5 @@
 import time
+import thread
 from engine import Engine
 
 
@@ -65,9 +66,12 @@ class Warrior(Engine):
             self.play_sound(3)
 
     def check_drop(self):
-        for line in self.get_system_msg_multiline():
-            if 'drop' in line:
-                self.play_sound(5)
+        def _check_drop_thread(parent):
+            time.sleep(1)
+            for line in parent.get_system_msg_multiline():
+                if 'drop' in line:
+                    parent.play_sound(5)
+        thread.start_new_thread(_check_drop_thread, (self,))
 
 
 if __name__ == '__main__':
