@@ -4,11 +4,13 @@ from PIL import ImageGrab, Image
 
 color_chat_brown = (176, 153, 121)
 color_chat_yelow = (255, 251, 0)
+color_chat_green = (98, 138, 0)
 p_white = (220, 217, 220)
 p_green = (162, 251, 171)
 p_yelow = (250, 250, 145)
 p_violet = (102, 151, 255)
-target_name_colours = (p_white, p_green, p_yelow)
+p_blue = (162, 165, 252)
+target_name_colours = (p_white, p_green, p_yelow, p_blue)
 
 
 class OCR(object):
@@ -320,6 +322,21 @@ class Window(OCR):
             return res[0]
         else:
             return ''
+
+    def get_system_msg_multiline(self, colour_list=[color_chat_brown, color_chat_yelow]):
+        if not hasattr(self, "system_msg_multiline_coordinates"):
+            try:
+                x, y = self.get_window_location()
+                x, y, _, _ = find_image("../templates/arrow_down.bmp", (x, y, x + 25, y + 900))
+                self.system_msg_multiline_coordinates = (x + 15, y - 100, x + 320, y + 8)
+            except TypeError:
+                print("system message is not found")
+                return False
+        res = self.get_multiline(colour_list, self.system_msg_multiline_coordinates)
+        if res:
+            return [t['line'] for t in res]
+        else:
+            return []
 
     def get_self_hp(self):
         res = self.get_self_hp_location()

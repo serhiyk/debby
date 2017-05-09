@@ -72,7 +72,7 @@ class Engine(KB, Window):
 
     def init_hp_skills(self):
         if 'hp_skills' not in self.config:
-            self.use_hp_skills = lambda: None
+            self.use_hp_skills = lambda _: None
             return
         self.hp_skills = []
         for skill in self.config['hp_skills']:
@@ -120,7 +120,7 @@ class Engine(KB, Window):
 
     def init_pre_skills(self):
         if 'pre_skills' not in self.config:
-            self.use_pre_skills = lambda: None
+            self.use_pre_skills = lambda _: None
             return
         self.pre_skills = []
         for skill in self.config['pre_skills']:

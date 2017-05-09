@@ -61,6 +61,13 @@ class Warrior(Engine):
     def check_self_hp(self):
         hp = self.get_self_hp()
         self.use_hp_skills(hp)
+        if hp < 20:
+            self.play_sound(3)
+
+    def check_drop(self):
+        for line in self.get_system_msg_multiline():
+            if 'drop' in line:
+                self.play_sound(5)
 
 
 if __name__ == '__main__':
