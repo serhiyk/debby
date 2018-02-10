@@ -1,153 +1,134 @@
+import logging
 import time
+import _thread
+import queue
 import serial
+from pymouse import PyMouse
 
 
 class KB(object):
-    def __init__(self):
+    def __init__(self, port):
         super(KB, self).__init__()
+        self.q = queue.Queue()
         self.ser = serial.Serial()
         self.ser.baudrate = 57600
-        self.ser.port = 'COM9'
+        self.ser.port = port
+        self.ser.timeout = 0.1
         self.ser.open()
+        self.running = True
+        _thread.start_new_thread(self._read_thread, ())
+        self.mouse = PyMouse()
+
+    def close(self):
+        self.running = False
+        self.ser.close()
+
+    def _read_thread(self):
+        data = b''
+        while self.running:
+            rx_byte = self.ser.read(1)
+            if not rx_byte:
+                continue
+            if rx_byte == b'\x01':
+                data = b''
+            elif rx_byte == b'\x00':
+                self.q.put(data)
+            else:
+                data += rx_byte
+
+    def _send(self, data):
+        with self.q.mutex:
+            self.q.queue.clear()
+        self.ser.write(b'\x01')
+        self.ser.write(data)
+        self.ser.write(b'\x00')
+        try:
+            self.q.get(timeout=10)
+        except queue.Empty:
+            logging.error('response timeout')
+
+    def write(self, data):
+        self._send(b'w' + data.encode('utf-8'))
 
     def click(self):
-        self.ser.write(chr(1))
-        self.ser.write('c')
-        self.ser.write(chr(0))
+        self._send(b'c')
 
     def doubleclick(self):
         self.click()
         time.sleep(0.01)
         self.click()
-        # self.ser.write(chr(1))
-        # self.ser.write('d')
-        # self.ser.write(chr(0))
+        # self._send(b'd')
 
     def move(self, x, y):
         if x < 0:
-            x_s = -1
-        else:
-            x_s = 1
-        x *= x_s
+            x += 0x10000
         if y < 0:
-            y_s = -1
-        else:
-            y_s = 1
-        y *= y_s
-        while x > 0 or y > 0:
-            if x > 100:
-                _x = 100
-            else:
-                _x = x
-            x -= _x
-            _x *= x_s
-            if _x < 0:
-                _x += 256
-            if y > 100:
-                _y = 100
-            else:
-                _y = y
-            y -= _y
-            _y *= y_s
-            if _y < 0:
-                _y += 256
-            self.ser.write(chr(1))
-            self.ser.write('m')
-            self.ser.write('{:02X}'.format(_x))
-            self.ser.write('{:02X}'.format(_y))
-            self.ser.write(chr(0))
-            time.sleep(0.5)
+            y += 0x10000
+        self._send(b'M%04X%04X' % (x, y))
 
-    def move_to(self, coordinates):
-        _x = coordinates[0] - self.current_x
-        _y = coordinates[1] - self.current_y
-        self.move(_x, _y)
-        time.sleep(0.5)
-        self.current_x = coordinates[0]
-        self.current_y = coordinates[1]
+    def move_to(self, position):
+        n = 0
+        while n < 5:
+            n += 1
+            cur_position = self.mouse.position()
+            if cur_position == position:
+                break
+            x = position[0] - cur_position[0]
+            y = position[1] - cur_position[1]
+            self.move(x, y)
 
     def move_to_0(self):
         self.move(-1920, -1080)
-        self.current_x = 0
-        self.current_y = 0
-
-    def send(self, key):
-        self.ser.write(chr(1))
-        self.ser.write('w')
-        self.ser.write(key)
-        self.ser.write(chr(0))
 
     def press(self, key):
-        self.ser.write(chr(1))
-        self.ser.write('p')
-        self.ser.write(key)
-        self.ser.write(chr(0))
+        self._send(b'p' + key.encode('utf-8'))
 
     def release(self, key):
-        self.ser.write(chr(1))
-        self.ser.write('r')
-        self.ser.write(key)
-        self.ser.write(chr(0))
-
-    def write(self, data):
-        for c in data:
-            self.send('{:02X}'.format(ord(c)))
-
-    def close(self):
-        self.ser.close()
+        self._send(b'r' + key.encode('utf-8'))
 
     def alt_tab(self):
-        self.press('82')
+        self.press(b'82')
         time.sleep(0.2)
-        self.send('B3')
+        self.write(b'B3')
         time.sleep(0.2)
-        self.release('82')
+        self.release(b'82')
         time.sleep(3)
 
     def enter(self):
-        self.send('B0')
+        self.write(b'B0')
 
     def f1(self):
-        self.send('C2')
+        self.write(b'C2')
 
     def f2(self):
-        self.send('C3')
+        self.write(b'C3')
 
     def f3(self):
-        self.send('C4')
+        self.write(b'C4')
 
     def f4(self):
-        self.send('C5')
+        self.write(b'C5')
 
     def f5(self):
-        self.send('C6')
+        self.write(b'C6')
 
     def f6(self):
-        self.send('C7')
+        self.write(b'C7')
 
     def f7(self):
-        self.send('C8')
+        self.write(b'C8')
 
     def f8(self):
-        self.send('C9')
+        self.write(b'C9')
 
     def f9(self):
-        self.send('CA')
+        self.write(b'CA')
 
     def f10(self):
-        self.send('CB')
+        self.write(b'CB')
 
     def f11(self):
-        self.send('CC')
+        self.write(b'CC')
 
     def f12(self):
-        self.send('CD')
-
-
-if __name__ == '__main__':
-    t = KB()
-    t.move_to_0()
-    t.move_to((500, 500))
-    t.click()
-    time.sleep(1)
-    t.write('hello')
+        self.write(b'CD')
