@@ -1,0 +1,7 @@
+numpy
+opencv-python
+pyserial
+mss
+bitarray
+Pillow
+pyUserInput

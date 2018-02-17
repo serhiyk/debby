@@ -51,13 +51,12 @@ class KB(object):
         self._send(b'w' + data.encode('utf-8'))
 
     def click(self):
-        self._send(b'c')
+        self._send(b'Cl')
 
     def doubleclick(self):
         self.click()
         time.sleep(0.01)
         self.click()
-        # self._send(b'd')
 
     def move(self, x, y):
         if x < 0:
@@ -79,6 +78,11 @@ class KB(object):
 
     def move_to_0(self):
         self.move(-1920, -1080)
+
+    def rotate(self, x, y):
+        self._send(b'Pr')
+        self.move(x, y)
+        self._send(b'Rr')
 
     def press(self, key):
         self._send(b'p' + key.encode('utf-8'))
