@@ -7,12 +7,12 @@ from pymouse import PyMouse
 
 
 class KB(object):
-    def __init__(self, port):
+    def __init__(self):
         super(KB, self).__init__()
         self.q = queue.Queue()
         self.ser = serial.Serial()
         self.ser.baudrate = 57600
-        self.ser.port = port
+        self.ser.port = 'COM9'
         self.ser.timeout = 0.1
         self.ser.open()
         self.running = True
@@ -48,7 +48,7 @@ class KB(object):
             logging.error('response timeout')
 
     def write(self, data):
-        self._send(b'w' + data.encode('utf-8'))
+        self._send(b'w' + data)
 
     def click(self):
         self._send(b'Cl')

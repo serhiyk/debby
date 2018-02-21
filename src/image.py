@@ -6,11 +6,25 @@ from mss import mss
 from ocr import OCR
 
 
+class Color(object):
+    chat_brown = (176, 153, 121)
+    chat_yelow = (255, 251, 0)
+    chat_green = (98, 138, 0)
+    p_white = (220, 217, 220)
+    p_green = (162, 251, 171)
+    p_yelow = (250, 250, 145)
+    p_violet = (102, 151, 255)
+    p_blue = (162, 165, 252)
+    target_name = (p_white, p_green, p_yelow, p_blue)
+
+
 def grab_screen(bbox):
     # sct.monitors[1]
     monitor = {'top': bbox[1], 'left': bbox[0], 'width': bbox[2]-bbox[0], 'height': bbox[3]-bbox[1]}
     with mss() as sct:
-        return np.array(sct.grab(monitor).pixels)
+        data = sct.grab(monitor)
+        data = data.pixels
+    return np.array(data, dtype='uint8')
 
 
 class Image(object):
@@ -83,3 +97,22 @@ class Image(object):
             line['center'][0] += bbox[0]
             line['center'][1] += bbox[1]
         return multiline
+
+    def find_text(self, bbox):
+        screen = grab_screen(bbox)
+        screen[screen.shape[0]-310:, :340] = (0, 0, 0)
+        screen = cv2.cvtColor(screen, cv2.COLOR_RGB2GRAY)
+        _, screen = cv2.threshold(screen, 252, 255, cv2.THRESH_BINARY)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (40, 5))
+        _img = cv2.morphologyEx(screen, cv2.MORPH_CLOSE, kernel)
+        _, contours, _ = cv2.findContours(_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        text = []
+        for contour in contours:
+            x, y, w, h = cv2.boundingRect(contour)
+            if w > 10 and 6 < h < 13:
+                line = self.ocr.parse_line(screen[y:y+h, x-1:x+w], self.ocr.FONT12)
+                if line:
+                    _x = bbox[0] + x + line[1] + (line[2] - line[1]) // 2
+                    _y = bbox[1] + y + h // 2
+                    text.append([line[0], [_x, _y]])
+        return text

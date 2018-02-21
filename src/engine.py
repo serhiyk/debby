@@ -1,10 +1,10 @@
 import json
 import time
 import socket
-import thread
+import _thread
 import winsound
 from kb import KB
-from screen import Window
+from interface import Interface
 
 UDP_PORT = 5005
 
@@ -19,12 +19,12 @@ class State(object):
 
 
 def play_sound_thread(duration, frequency):
-    for i in range(duration):
+    for _ in range(duration):
         winsound.Beep(frequency, 500)
         time.sleep(0.5)
 
 
-class Engine(KB, Window):
+class Engine(KB, Interface):
     def __init__(self, config):
         super(Engine, self).__init__()
         self.recv_sock = None
@@ -43,13 +43,13 @@ class Engine(KB, Window):
         self.exit_flag = True
 
     def play_sound(self, duration, frequency=1000):
-        thread.start_new_thread(play_sound_thread, (duration, frequency))
+        _thread.start_new_thread(play_sound_thread, (duration, frequency))
 
     def send_remote(self, **kwargs):
         if self.send_sock is None:
             self.send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.send_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.send_sock.sendto(json.dumps(kwargs), ('255.255.255.255', UDP_PORT))
+        self.send_sock.sendto(json.dumps(kwargs).encode('utf-8'), ('255.255.255.255', UDP_PORT))
 
     def recv_remote(self):
         if self.recv_sock is None:
@@ -61,13 +61,13 @@ class Engine(KB, Window):
     def init_variables(self):
         if 'variables' not in self.config:
             return
-        for variable, value in self.config['variables'].iteritems():
+        for variable, value in self.config['variables'].items():
             setattr(self, variable, value)
 
     def init_general_skills(self):
         if 'general_skills' not in self.config:
             return
-        for skill, func in self.config['general_skills'].iteritems():
+        for skill, func in self.config['general_skills'].items():
             setattr(self, skill, getattr(self, func))
 
     def init_hp_skills(self):
@@ -137,7 +137,7 @@ class Engine(KB, Window):
 
     def use_pre_skills(self, target_name=''):
         for skill in self.pre_skills:
-            if len(skill['skip_target']) > 0 and target_name.startswith(skill['skip_target']):
+            if skill['skip_target'] and target_name.startswith(skill['skip_target']):
                 continue
             if time.time() > (skill['timeout'] + skill['last_use']):
                 skill['func']()
@@ -171,90 +171,3 @@ class Engine(KB, Window):
                 setattr(self, key, data[key])
             # func = getattr(self, data)
             # func()
-
-
-class Engine1(Engine):
-    def __init__(self, config):
-        super(Engine1, self).__init__(config)
-
-    def suicider(self):
-        window = Window()
-        state = State.check_target
-        while not self.exit_flag:
-            if state == State.check_target:
-                self.target()
-                time.sleep(0.3)
-                state = State.kill_target
-
-            elif state == State.kill_target:
-                self.use_pre_skills()
-                while window.check_death() is False:
-                    self.attackforce()
-                    time.sleep(1)
-                self.use_post_skills()
-                state = State.resurrection
-
-            elif state == State.resurrection:
-                while window.check_resurrection() is False:
-                    time.sleep(1)
-                self.click()
-                time.sleep(2)
-                state = State.check_target
-
-    def halloween(self):
-        window = Window()
-        feed_counter = 0
-        state = State.seed_squash
-        while not self.exit_flag:
-            if state == State.seed_squash:
-                self.use_sword()
-                time.sleep(0.3)
-                self.use_pre_skills()
-                self.use_tool()
-                time.sleep(0.3)
-                self.squash()
-                state = State.check_target
-
-            elif state == State.check_target:
-                self.targetnext()
-                time.sleep(0.3)
-                if window.get_target_hp() > 0:
-                    print 'Found next mob'
-                    feed_counter = 0
-                    state = State.pollen
-
-            elif state == State.pollen:
-                self.pollen()
-                time.sleep(1)
-                feed_counter += 1
-                if feed_counter == 5:
-                    state = State.wait_target
-
-            elif state == State.wait_target:
-                self.targetnext()
-                time.sleep(0.3)
-                if window.get_target_hp() > 0:
-                    print 'Found next mob'
-                    self.send_remote('targetnext')
-                    time.sleep(0.3)
-                    self.send_remote('attack')
-                    state = State.kill_target
-
-            elif state == State.kill_target:
-                while window.get_target_hp() > 0:
-                    self.attack()
-                    time.sleep(2)
-                time.sleep(1)
-                self.use_post_skills()
-                state = State.seed_squash
-
-
-if __name__ == '__main__':
-    with open('../config/servus.json') as data_file:
-        config = json.load(data_file)
-    e = Engine(config, daemon=False)
-    try:
-        while True:
-            time.sleep(1)
-    finally:
-        e.stop()

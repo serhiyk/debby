@@ -1,6 +1,7 @@
 import logging
 import numpy as np
-from image import Image, grab_screen
+import win32gui
+from image import Image, grab_screen, Color
 
 
 def get_window_info(hwnd, window_info):
@@ -8,7 +9,7 @@ def get_window_info(hwnd, window_info):
         if '' in win32gui.GetWindowText(hwnd):
             rect = win32gui.GetWindowRect(hwnd)
             window_info['window_start_x'] = rect[0]
-            window_info['window_start_y'] = rect[1]
+            window_info['window_start_y'] = rect[1] + 30
             window_info['window_end_x'] = rect[2]
             window_info['window_end_y'] = rect[3]
 
@@ -29,6 +30,8 @@ class Interface(object):
         self.hight = self.end_y - self.start_y
         self.bbox = (self.start_x, self.start_y, self.end_x, self.end_y)
         self.hp_bbox = (self.start_x+16, self.start_y+41, self.start_x+166, self.start_y+42)
+        self.sys_msg_bbox = (self.start_x+20, self.end_y-213, self.start_x+340, self.end_y-195)
+        self.sys_mmsg_bbox = (self.start_x+20, self.end_y-310, self.start_x+340, self.end_y-195)
         self.img = Image()
 
     def get_self_hp(self):
@@ -81,6 +84,16 @@ class Interface(object):
                 return 0
         return hp
 
+    def get_target_name(self, color_list=Color.target_name):
+        bbox = self._target_name_bbox()
+        if bbox is None:
+            return ''
+        res = self.img.get_multiline(color_list, bbox)
+        if res:
+            return res[0]['line']
+        else:
+            return ''
+
     def get_login_location(self):
         res = self.img.find_template('login_button.bmp', self.bbox)
         if res is None:
@@ -103,7 +116,7 @@ class Interface(object):
         return res
 
     def get_manor_phrase(self):
-        res = self.img.find_line_center('Tally up indigenous product', [p_violet])
+        res = self.img.find_line_center('Tally up indigenous product', [Color.p_violet])
         if res is None:
             logging.error('manor phrase is not found')
         return res
@@ -114,7 +127,7 @@ class Interface(object):
             logging.error('seed name is not found')
             return None
         bbox = (res[0], res[1], res[0]+140, res[1]+200)
-        return self.img.get_multiline([p_white], bbox)
+        return self.img.get_multiline([Color.p_white], bbox)
 
     def get_manor_town_list(self):
         res = self.img.find_template('territory_name.bmp', self.bbox)
@@ -130,7 +143,7 @@ class Interface(object):
         _, _, town_x, town_y = res
         result = {}
         bbox = (x, y, x+300, y+110)
-        for el in self.img.get_multiline([p_white], bbox):
+        for el in self.img.get_multiline([Color.p_white], bbox):
             try:
                 town, _, price, prize_type = el['line'].split()
                 result[town] = {'price': int(price), 'type': int(prize_type)}
@@ -146,7 +159,7 @@ class Interface(object):
         x, y, _, _ = res
         x -= 12
         bbox = (x, y, x + 100, y + 150)
-        res = self.img.find_line_center(town, [p_white], bbox)
+        res = self.img.find_line_center(town, [Color.p_white], bbox)
         if res is None:
             logging.error('town is not found')
         return res
@@ -171,3 +184,20 @@ class Interface(object):
 
     def get_resurrection_button(self):
         return self.img.find_template_center('resurrection_button.bmp', self.bbox)
+
+    def get_system_msg(self, color_list=[Color.chat_brown]):
+        res = self.img.get_multiline(color_list, self.sys_msg_bbox)
+        if res:
+            return res[0]['line']
+        else:
+            return ''
+
+    def get_system_msg_multiline(self, color_list=[]):
+        res = self.img.get_multiline(color_list, self.sys_mmsg_bbox)
+        if res:
+            return [t['line'] for t in res]
+        else:
+            return []
+
+    def find_targets(self):
+        return self.img.find_text(self.bbox)

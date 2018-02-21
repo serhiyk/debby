@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 import time
-import thread
+import _thread
 from engine import Engine
 
 
@@ -48,7 +49,7 @@ class Warrior(Engine):
 
             elif state == "wait_target":
                 if self.target_counter > 0:
-                    for i in xrange(self.target_counter * 4):
+                    for i in range(self.target_counter * 4):
                         self.pickup()
                         time.sleep(0.3)
                     self.target()
@@ -56,6 +57,8 @@ class Warrior(Engine):
                     self.attack()
                     self.target_counter = 0
                 self.check_self_hp()
+                for target in self.find_targets():
+                    print(target)
                 time.sleep(1)
                 state = "check_target"
 
@@ -71,7 +74,7 @@ class Warrior(Engine):
             for line in parent.get_system_msg_multiline():
                 if 'drop' in line:
                     parent.play_sound(5)
-        thread.start_new_thread(_check_drop_thread, (self,))
+        _thread.start_new_thread(_check_drop_thread, (self,))
 
 
 if __name__ == '__main__':
