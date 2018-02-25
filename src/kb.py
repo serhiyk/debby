@@ -58,6 +58,12 @@ class KB(object):
         time.sleep(0.01)
         self.click()
 
+    def mouse_pres_right(self):
+        self._send(b'Pr')
+
+    def mouse_release_right(self):
+        self._send(b'Rr')
+
     def move(self, x, y):
         if x < 0:
             x += 0x10000

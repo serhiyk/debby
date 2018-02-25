@@ -7,15 +7,15 @@ from ocr import OCR
 
 
 class Color(object):
-    chat_brown = (176, 153, 121)
-    chat_yelow = (255, 251, 0)
-    chat_green = (98, 138, 0)
-    p_white = (220, 217, 220)
-    p_green = (162, 251, 171)
-    p_yelow = (250, 250, 145)
-    p_violet = (102, 151, 255)
-    p_blue = (162, 165, 252)
-    target_name = (p_white, p_green, p_yelow, p_blue)
+    chat_brown = [176, 153, 121]
+    chat_yelow = [255, 251, 0]
+    chat_green = [98, 138, 0]
+    p_white = [220, 217, 220]
+    p_green = [162, 251, 171]
+    p_yelow = [250, 250, 145]
+    p_violet = [102, 151, 255]
+    p_blue = [162, 165, 252]
+    target_name = [p_white, p_green, p_yelow, p_blue]
 
 
 def grab_screen(bbox):

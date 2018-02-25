@@ -9,7 +9,7 @@ def get_window_info(hwnd, window_info):
         if '' in win32gui.GetWindowText(hwnd):
             rect = win32gui.GetWindowRect(hwnd)
             window_info['window_start_x'] = rect[0]
-            window_info['window_start_y'] = rect[1] + 30
+            window_info['window_start_y'] = rect[1]
             window_info['window_end_x'] = rect[2]
             window_info['window_end_y'] = rect[3]
 
@@ -18,42 +18,57 @@ class Interface(object):
 
     def __init__(self):
         super(Interface, self).__init__()
+        self.img = Image()
+
+    def init(self, correct=True):
         window_info = {}
         win32gui.EnumWindows(get_window_info, window_info)
         if not window_info:
-            raise WindowsError('window is not found')
+            return False
         self.start_x = window_info['window_start_x']
         self.start_y = window_info['window_start_y']
         self.end_x = window_info['window_end_x']
         self.end_y = window_info['window_end_y']
+        if correct:
+            bbox = (self.start_x, self.start_y, self.start_x+100, self.start_y+100)
+            res = self.img.find_template('border.bmp', bbox)
+            if res is None:
+                return False
+            self.start_x = res[0]
+            self.start_y = res[1]
         self.width = self.end_x - self.start_x
         self.hight = self.end_y - self.start_y
         self.bbox = (self.start_x, self.start_y, self.end_x, self.end_y)
-        self.hp_bbox = (self.start_x+16, self.start_y+41, self.start_x+166, self.start_y+42)
+        self.hp_bbox = (self.start_x+27, self.start_y+52, self.start_x+177, self.start_y+53)
         self.sys_msg_bbox = (self.start_x+20, self.end_y-213, self.start_x+340, self.end_y-195)
         self.sys_mmsg_bbox = (self.start_x+20, self.end_y-310, self.start_x+340, self.end_y-195)
-        self.img = Image()
+        return True
 
     def get_self_hp(self):
-        screen_data = grab_screen(self.hp_bbox)
-        hp = np.count_nonzero(screen_data == screen_data[0])
+        screen_data = grab_screen(self.hp_bbox)[0]
+        hp = 0
+        for p in screen_data:
+            if (p == screen_data[0]).all():
+                hp += 1
+            else:
+                break
         self.self_hp_color = getattr(self, 'self_hp_color', screen_data[0])
-        if hp == 150 and self.self_hp_color != screen_data[0]:
+        if hp == 150 and (self.self_hp_color != screen_data[0]).any():
             return 0
         return hp * 100 // 150
 
-    def _target_window_location(self):
+    def get_target_window_location(self):
         bbox = (self.start_x+200, self.start_y, self.start_x+1000, self.start_y+20)
         res = self.img.find_template('border.bmp', bbox)
         if res is None:
             logging.error("target window location is not found")
             return None
         x, y, _, _ = res
-        self._target_window_location = lambda: (x, y)
-        return self._target_window_location()
+        self.get_target_window_location = lambda: (x, y)
+        return self.get_target_window_location()
 
     def _target_name_bbox(self):
-        res = self._target_window_location()
+        res = self.get_target_window_location()
         if res is None:
             return None
         x = res[0] + 20
@@ -62,7 +77,7 @@ class Interface(object):
         return self._target_name_bbox()
 
     def _target_hp_bbox(self):
-        res = self._target_window_location()
+        res = self.get_target_window_location()
         if res is None:
             return None
         x = res[0] + 16
@@ -74,11 +89,17 @@ class Interface(object):
         target_hp_bbox = self._target_hp_bbox()
         if target_hp_bbox is None:
             return 0
-        screen_data = grab_screen(target_hp_bbox)
+        screen_data = grab_screen(target_hp_bbox)[0]
         hp_color = getattr(self, 'target_hp_color', screen_data[0])
-        hp = np.count_nonzero(screen_data == hp_color)
+        hp = 0
+        for p in screen_data:
+            if (p == hp_color).all():
+                hp += 1
+            else:
+                break
         if not hasattr(self, 'target_hp_color'):
             if hp > 10:
+                logging.info("Target HP color: %s", hp_color)
                 self.target_hp_color = hp_color
             else:
                 return 0
@@ -116,7 +137,7 @@ class Interface(object):
         return res
 
     def get_manor_phrase(self):
-        res = self.img.find_line_center('Tally up indigenous product', [Color.p_violet])
+        res = self.img.find_line_center('Tally up indigenous product', [Color.p_violet], self.bbox)
         if res is None:
             logging.error('manor phrase is not found')
         return res
@@ -152,7 +173,7 @@ class Interface(object):
         return result, town_x, town_y
 
     def get_manor_town(self, town):
-        res = self.img.find_template('town_choice.bmp')
+        res = self.img.find_template('town_choice.bmp', self.bbox)
         if res is None:
             logging.error('town choice is not found')
             return None

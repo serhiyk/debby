@@ -1,13 +1,16 @@
+#!/usr/bin/env python3
 import time
-import thread
+import _thread
 from engine import Engine
 
 
 class Support(Engine):
     def __init__(self, config):
         super(Support, self).__init__(config)
+        if not self.init():
+            raise WindowsError('window is not found')
         self.hp = 100
-        thread.start_new_thread(self.client, ())
+        _thread.start_new_thread(self.client, ())
 
     def run(self):
         time.sleep(5)

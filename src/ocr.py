@@ -39,7 +39,7 @@ class OCR(object):
                         _trie[c] = {}
                         _trie = _trie[c]
                 if 'char' in _trie:
-                    logging.warn('Same %s %s', char, str(_trie['char']))
+                    logging.info('Same %s %s', char, str(_trie['char']))
                 _trie['char'] = char
 
     def parse_line(self, data, font):
@@ -59,7 +59,7 @@ class OCR(object):
                         text += _trie['char']
                         x2 = i
                     else:
-                        logging.warn('Unknown letter %s', str(char_data))
+                        logging.info('Unknown letter %s', str(char_data))
                 char_data = []
                 _trie = font_trie
                 continue
