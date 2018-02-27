@@ -15,6 +15,7 @@ def get_window_info(hwnd, window_info):
 
 
 class Interface(object):
+    chat = []
 
     def __init__(self):
         super(Interface, self).__init__()
@@ -39,9 +40,10 @@ class Interface(object):
         self.width = self.end_x - self.start_x
         self.hight = self.end_y - self.start_y
         self.bbox = (self.start_x, self.start_y, self.end_x, self.end_y)
-        self.hp_bbox = (self.start_x+27, self.start_y+52, self.start_x+177, self.start_y+53)
-        self.sys_msg_bbox = (self.start_x+20, self.end_y-213, self.start_x+340, self.end_y-195)
-        self.sys_mmsg_bbox = (self.start_x+20, self.end_y-310, self.start_x+340, self.end_y-195)
+        self.hp_bbox = (self.start_x+16, self.start_y+52, self.start_x+166, self.start_y+53)
+        self.sys_msg_bbox = (self.start_x+20, self.end_y-222, self.start_x+350, self.end_y-200)
+        self.sys_mmsg_bbox = (self.start_x+20, self.end_y-320, self.start_x+350, self.end_y-200)
+        self.chat_bbox = (self.start_x+20, self.end_y-190, self.start_x+350, self.end_y-60)
         return True
 
     def get_self_hp(self):
@@ -206,19 +208,39 @@ class Interface(object):
     def get_resurrection_button(self):
         return self.img.find_template_center('resurrection_button.bmp', self.bbox)
 
-    def get_system_msg(self, color_list=[Color.chat_brown]):
+    def get_system_msg(self):
+        color_list = [Color.chat_brown]
         res = self.img.get_multiline(color_list, self.sys_msg_bbox)
         if res:
             return res[0]['line']
         else:
             return ''
 
-    def get_system_msg_multiline(self, color_list=[]):
+    def get_system_msg_multiline(self):
+        color_list = [Color.chat_brown, Color.chat_yelow]
         res = self.img.get_multiline(color_list, self.sys_mmsg_bbox)
         if res:
             return [t['line'] for t in res]
         else:
             return []
 
+    def get_chat(self):
+        color_list = [Color.chat_white, Color.chat_blue, Color.chat_pink, Color.chat_orange]
+        res = self.img.get_multiline(color_list, self.chat_bbox)
+        if not res:
+            return []
+        chat = [t['line'] for t in res]
+        if len(chat) > len(self.chat):
+            chat = chat[len(self.chat):]
+        else:
+            for i in range(len(chat)):
+                if self.chat[-len(chat)+i:] == chat[:len(chat)-i]:
+                    chat = chat[len(chat)-i:]
+                    break
+        self.chat.extend(chat)
+        return chat
+
     def find_targets(self):
-        return self.img.find_text(self.bbox)
+        bbox = list(self.bbox)
+        bbox[3] -= 310
+        return self.img.find_text(bbox)

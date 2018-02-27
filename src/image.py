@@ -10,6 +10,10 @@ class Color(object):
     chat_brown = [176, 153, 121]
     chat_yelow = [255, 251, 0]
     chat_green = [98, 138, 0]
+    chat_white = [220, 217, 220]
+    chat_blue = [64, 138, 255]
+    chat_pink = [234, 162, 245]
+    chat_orange = [255, 112, 0]
     p_white = [220, 217, 220]
     p_green = [162, 251, 171]
     p_yelow = [250, 250, 145]
@@ -100,7 +104,6 @@ class Image(object):
 
     def find_text(self, bbox):
         screen = grab_screen(bbox)
-        screen[screen.shape[0]-310:, :340] = (0, 0, 0)
         screen = cv2.cvtColor(screen, cv2.COLOR_RGB2GRAY)
         _, screen = cv2.threshold(screen, 252, 255, cv2.THRESH_BINARY)
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (40, 5))

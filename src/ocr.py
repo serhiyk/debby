@@ -17,7 +17,7 @@ class OCR(object):
     def __init__(self):
         super(OCR, self).__init__()
         for font_name, font_data in self.fonts.items():
-            with open(font_name + '.json') as f:
+            with open(font_name + '.json', encoding='utf-8') as f:
                 font_json = json.load(f)
             font_data['trie'] = {}
             font_trie = font_data['trie']
@@ -59,7 +59,7 @@ class OCR(object):
                         text += _trie['char']
                         x2 = i
                     else:
-                        logging.info('Unknown letter %s', str(char_data))
+                        logging.debug('Unknown letter %s', str(char_data))
                 char_data = []
                 _trie = font_trie
                 continue

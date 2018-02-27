@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import time
+import logging
+import coloredlogs
 import _thread
 from engine import Engine
 
@@ -18,7 +20,8 @@ class Support(Engine):
             self.use_hp_skills(self.hp)
             self.use_post_skills()
             self.check_self_hp()
-            time.sleep(0.5)
+            self.check_chat()
+            time.sleep(1)
 
     def check_self_hp(self):
         hp = self.get_self_hp()
@@ -27,6 +30,7 @@ class Support(Engine):
 
 
 if __name__ == '__main__':
+    coloredlogs.install(fmt='%(asctime)s %(message)s', datefmt='%H:%M:%S')
     try:
         e = Support('../config/test.json')
         e.run()

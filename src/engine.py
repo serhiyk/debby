@@ -1,3 +1,4 @@
+import logging
 import json
 import time
 import socket
@@ -171,3 +172,10 @@ class Engine(KB, Interface):
                 setattr(self, key, data[key])
             # func = getattr(self, data)
             # func()
+
+    def check_chat(self):
+        chat = self.get_chat()
+        if chat:
+            self.play_sound(5)
+            for line in chat:
+                logging.warning('chat: %s', line)
