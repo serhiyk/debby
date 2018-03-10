@@ -142,3 +142,7 @@ class KB(object):
 
     def f12(self):
         self.write(b'CD')
+
+    def write_str(self, data):
+        for c in data:
+            self.write(b'%02X' % ord(c))

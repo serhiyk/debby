@@ -7,17 +7,6 @@ import winsound
 from kb import KB
 from interface import Interface
 
-UDP_PORT = 5005
-
-
-class State(object):
-    check_target = 0
-    kill_target = 1
-    wait_target = 2
-    resurrection = 3
-    seed_squash = 4
-    pollen = 5
-
 
 def play_sound_thread(duration, frequency):
     for _ in range(duration):
@@ -26,6 +15,9 @@ def play_sound_thread(duration, frequency):
 
 
 class Engine(KB, Interface):
+    UDP_PORT = 5005
+    spoiler = False
+
     def __init__(self, config):
         super(Engine, self).__init__()
         self.recv_sock = None
@@ -50,12 +42,12 @@ class Engine(KB, Interface):
         if self.send_sock is None:
             self.send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.send_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.send_sock.sendto(json.dumps(kwargs).encode('utf-8'), ('255.255.255.255', UDP_PORT))
+        self.send_sock.sendto(json.dumps(kwargs).encode('utf-8'), ('255.255.255.255', self.UDP_PORT))
 
     def recv_remote(self):
         if self.recv_sock is None:
             self.recv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.recv_sock.bind(('0.0.0.0', UDP_PORT))
+            self.recv_sock.bind(('0.0.0.0', self.UDP_PORT))
         data, addr = self.recv_sock.recvfrom(1024)
         return json.loads(data)
 
@@ -125,6 +117,8 @@ class Engine(KB, Interface):
             return
         self.pre_skills = []
         for skill in self.config['pre_skills']:
+            if skill['func'] == 'spoil':
+                self.spoiler = True
             _skill = {'name': skill['name']}
             _skill['func'] = getattr(self, skill['func'])
             if 'first_use' in skill and skill['first_use']:

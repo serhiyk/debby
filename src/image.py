@@ -7,13 +7,14 @@ from ocr import OCR
 
 
 class Color(object):
-    chat_brown = [176, 153, 121]
-    chat_yelow = [255, 251, 0]
-    chat_green = [98, 138, 0]
-    chat_white = [220, 217, 220]
-    chat_blue = [64, 138, 255]
-    chat_pink = [234, 162, 245]
-    chat_orange = [255, 112, 0]
+    sys_success = [87, 157, 255]  # blue
+    sys_msg = [176, 153, 121]  # brown
+    sys_drop = [255, 251, 0]  # yelow
+    sys_skill = [98, 138, 0]  # green
+    chat_general = [220, 217, 220]  # white
+    chat_hero = [64, 138, 255]  # blue
+    chat_trade = [234, 162, 245]  # pink
+    chat_shout = [255, 112, 0]  # orange
     p_white = [220, 217, 220]
     p_green = [162, 251, 171]
     p_yelow = [250, 250, 145]
@@ -29,6 +30,12 @@ def grab_screen(bbox):
         data = sct.grab(monitor)
         data = data.pixels
     return np.array(data, dtype='uint8')
+
+
+def save_screen(file_path, bbox):
+    screen = grab_screen(bbox)
+    screen = cv2.cvtColor(screen, cv2.COLOR_RGB2BGR)
+    cv2.imwrite(file_path, screen)
 
 
 class Image(object):
@@ -83,17 +90,8 @@ class Image(object):
         return res[2], res[3]
 
     def get_multiline(self, colour_list, bbox):
-        # colour_list = np.array(colour_list)
         screen = grab_screen(bbox)
-        # screen = np.where(screen in colour_list, 0, 255)
-        # screen = np.where(screen in np.array([[0x40, 0x8A, 0xFF],[0x40, 0x8A, 0xFE]]), 0, 255)
-        # screen = np.where(screen == [0x40, 0x8A, 0xFF], 0, 255)
-        # screen = np.where(np.isin(screen, np.array([[0x40, 0x8A, 0xFF],[0x40, 0x8A, 0xFE]])), 255, 0)
         screen = [[list(p) in colour_list for p in row] for row in screen]
-        # screen = [[p in colour_list for p in row] for row in screen]
-        # screen = [[np.isin(p, colour_list) for p in row] for row in screen]
-        # screen = [[p in [[0x40, 0x8A, 0xFF],[0x40, 0x8A, 0xFE]] for p in row] for row in screen]
-        # print(screen)
         multiline = self.ocr.parse_multiline(screen)
         for line in multiline:
             line['start'][0] += bbox[0]

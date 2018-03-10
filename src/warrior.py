@@ -25,7 +25,7 @@ class Warrior(Engine):
                 self.check_self_hp()
                 self.check_chat()
                 self.targetnext()
-                time.sleep(0.5)
+                time.sleep(1)
                 target_hp = self.get_target_hp()
                 if target_hp > 0:
                     self.target_counter += 1
@@ -48,6 +48,7 @@ class Warrior(Engine):
                 logging.info("Killing %s", target_name)
                 self.use_battle_skills()
                 self.use_pre_skills(target_name)
+                spoiled = False
                 i = 0
                 while self.get_target_hp() > 0:
                     self.use_battle_skills()
@@ -56,6 +57,12 @@ class Warrior(Engine):
                     if i % 2 == 0:
                         self.attack()
                     i += 1
+                    if self.spoiler and not spoiled:
+                        time.sleep(1)
+                        if 'Spoil' in ''.join(self.get_success_msg()):
+                            spoiled = True
+                        else:
+                            self.spoil()
                     time.sleep(1)
                 time.sleep(1)
                 self.use_post_skills()
@@ -65,13 +72,17 @@ class Warrior(Engine):
             elif state == 'goto_home':
                 for i in range(self.target_counter * 4):
                     self.pickup()
-                    if i % 2 == 0:
+                    if i % 8 == 0:
+                        if self.get_target_hp():
+                            break
                         self.check_chat()
-                    time.sleep(0.3)
-                self.target()
-                time.sleep(0.5)
-                self.attack()
-                time.sleep(3)
+                        self.targetnext()
+                    time.sleep(0.2)
+                else:
+                    self.target()
+                    time.sleep(0.5)
+                    self.attack()
+                    time.sleep(2)
                 self.target_counter = 0
                 state = 'check_target'
 
@@ -91,14 +102,14 @@ class Warrior(Engine):
                     self.move_to(location)
                     if time.time() - _t < 0.3:
                         self.click()
-                        time.sleep(0.5)
+                        time.sleep(1)
                         target_hp = self.get_target_hp()
                         if target_hp > 0:
                             self.attack()
-                        for _ in range(10):
-                            if self.get_target_hp() < target_hp:
-                                break
-                            time.sleep(0.5)
+                            for _ in range(10):
+                                if self.get_target_hp() < target_hp:
+                                    break
+                                time.sleep(0.5)
                         state = 'goto_home'
                     else:
                         state = 'check_target'
@@ -119,14 +130,6 @@ class Warrior(Engine):
         self.use_hp_skills(hp)
         if hp < 20:
             self.play_sound(3)
-
-    def check_drop(self):
-        def _check_drop_thread(parent):
-            time.sleep(1)
-            for line in parent.get_system_msg_multiline():
-                if 'drop' in line:
-                    parent.play_sound(5)
-        _thread.start_new_thread(_check_drop_thread, (self,))
 
 
 if __name__ == '__main__':

@@ -1,12 +1,12 @@
 import logging
 import numpy as np
 import win32gui
-from image import Image, grab_screen, Color
+from image import Image, grab_screen, save_screen, Color
 
 
 def get_window_info(hwnd, window_info):
     if win32gui.IsWindowVisible(hwnd):
-        if '' in win32gui.GetWindowText(hwnd):
+        if 'Lineage' in win32gui.GetWindowText(hwnd):
             rect = win32gui.GetWindowRect(hwnd)
             window_info['window_start_x'] = rect[0]
             window_info['window_start_y'] = rect[1]
@@ -209,7 +209,7 @@ class Interface(object):
         return self.img.find_template_center('resurrection_button.bmp', self.bbox)
 
     def get_system_msg(self):
-        color_list = [Color.chat_brown]
+        color_list = [Color.sys_msg]
         res = self.img.get_multiline(color_list, self.sys_msg_bbox)
         if res:
             return res[0]['line']
@@ -217,7 +217,15 @@ class Interface(object):
             return ''
 
     def get_system_msg_multiline(self):
-        color_list = [Color.chat_brown, Color.chat_yelow]
+        color_list = [Color.sys_msg, Color.sys_drop]
+        res = self.img.get_multiline(color_list, self.sys_mmsg_bbox)
+        if res:
+            return [t['line'] for t in res]
+        else:
+            return []
+
+    def get_success_msg(self):
+        color_list = [Color.sys_success]
         res = self.img.get_multiline(color_list, self.sys_mmsg_bbox)
         if res:
             return [t['line'] for t in res]
@@ -225,7 +233,7 @@ class Interface(object):
             return []
 
     def get_chat(self):
-        color_list = [Color.chat_white, Color.chat_blue, Color.chat_pink, Color.chat_orange]
+        color_list = [Color.chat_general, Color.chat_hero, Color.chat_trade, Color.chat_shout]
         res = self.img.get_multiline(color_list, self.chat_bbox)
         if not res:
             return []
@@ -244,3 +252,6 @@ class Interface(object):
         bbox = list(self.bbox)
         bbox[3] -= 310
         return self.img.find_text(bbox)
+
+    def save_screen(self, file_path):
+        save_screen(file_path, self.bbox)
