@@ -16,6 +16,8 @@ def get_window_info(hwnd, window_info):
 
 class Interface(object):
     chat = []
+    fishing_bbox = None
+    fishing_color = None
 
     def __init__(self):
         super(Interface, self).__init__()
@@ -255,3 +257,27 @@ class Interface(object):
 
     def save_screen(self, file_path):
         save_screen(file_path, self.bbox)
+
+    def check_fishing_window(self):
+        res = self.img.find_template('window_token.bmp', self.bbox)
+        if res is None:
+            return False
+        if not self.fishing_bbox:
+            self.fishing_bbox = [res[0]+12, res[1]+240, res[0]+242, res[1]+241]
+        return True
+
+    def get_fish_hp(self):
+        screen_data = grab_screen(self.fishing_bbox)[0]
+        if self.fishing_color is None:
+            for p in screen_data[:10]:
+                if not (p == screen_data[0]).all():
+                    logging.warning('fish hp is not found')
+                    return None
+            self.fishing_color = screen_data[0]
+        hp = 0
+        for p in screen_data:
+            if (p == self.fishing_color).all():
+                hp += 1
+            else:
+                break
+        return hp
