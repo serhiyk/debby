@@ -247,6 +247,7 @@ class Manor(Engine):
                     logging.info('Sell button is not found')
                     break
                 self.move_to(coordinates)
+                self.screenshot()
                 logging.info('Wait to %s', run_time)
                 while datetime.now() < run_time:
                     pass
@@ -254,15 +255,19 @@ class Manor(Engine):
                 self.state = 'done'
 
             elif self.state == 'done':
-                if hasattr(self, 'screen_path'):
-                    file_name = 'manor%s_%s.bmp' % (datetime.now().strftime("%Y_%m_%d_%H_%M_%S"), self.user)
-                    file_path = os.path.join(self.screen_path, file_name)
-                    self.save_screen(file_path)
+                self.screenshot()
                 time.sleep(30)
                 os.system('shutdown -s')
+                # os.system('shutdown -t 0 -r -f')
                 break
 
             time.sleep(0.5)
+
+    def screenshot(self):
+        if hasattr(self, 'screen_path'):
+            file_name = 'manor%s_%s.bmp' % (datetime.now().strftime("%Y_%m_%d_%H_%M_%S"), self.user)
+            file_path = os.path.join(self.screen_path, file_name)
+            self.save_screen(file_path)
 
 
 if __name__ == '__main__':

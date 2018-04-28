@@ -22,8 +22,11 @@ class Engine(KB, Interface):
         super(Engine, self).__init__()
         self.recv_sock = None
         self.send_sock = None
-        with open(config) as f:
-            self.config = json.load(f)
+        if config:
+            with open(config) as f:
+                self.config = json.load(f)
+        else:
+            self.config = {}
         self.exit_flag = False
         self.init_variables()
         self.init_general_skills()

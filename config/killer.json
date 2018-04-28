@@ -1,0 +1,8 @@
+{
+    "type": "killer",
+    "variables": {},
+    "general_skills": {
+        "target": "f2",
+        "attackforce": "f3"
+    }
+}
