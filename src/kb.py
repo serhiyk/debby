@@ -1,5 +1,6 @@
 import logging
 import time
+import random
 import _thread
 import queue
 import serial
@@ -48,7 +49,11 @@ class KB(object):
             logging.error('response timeout')
 
     def write(self, data):
-        self._send(b'w' + data)
+        # self._send(b'w' + data)
+        self._send(b'p' + data)
+        time.sleep(random.uniform(0.05, 0.15))
+        self._send(b'r' + data)
+        time.sleep(random.uniform(0.02, 0.1))
 
     def click(self):
         self._send(b'Cl')
