@@ -8,7 +8,8 @@
         "use_tool": "f6",
         "targetnext": "f9",
         "squash": "f11",
-        "pollen": "f12"
+        "pollen": "f12",
+        "hast": "f3"
     },
     "pre_skills": [
         {
